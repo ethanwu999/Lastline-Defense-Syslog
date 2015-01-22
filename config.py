@@ -18,6 +18,22 @@ def get_ssh_pass():
             print '\nPassword not match, try again!\n'
     return ssh_password1
 
+# check if previous config
+my_cron = CronTab(user=True)
+if len(list(my_cron.find_command('clean_block'))) != 0:
+    ans = raw_input('There is an old config, config again?(Y/N) ').strip()
+    if len(ans) != 1:
+        print('Input error! Use "Y" or "N"')
+        exit()
+    elif ans.upper() == 'N':
+        exit()
+    elif ans.upper() == 'Y':
+        my_cron.remove_all('clean_blocked')
+        my_cron.write()
+    else:
+        print('Input error! Use "Y" or "N"')
+        exit()
+
 title = '''
 Lastline Defense Syslog (LDS) Config Menu
 '''
@@ -29,6 +45,7 @@ fw_brand_menu = '''
         2. Sonicwall
         3. Watchguard
         4. PaloAlto
+        5. Radware DefensePro
         
         0. Quit
         
@@ -45,6 +62,8 @@ elif fw_brand_num == 3:
     fw_brand = 'WG'
 elif fw_brand_num == 4:
     fw_brand = 'PA'
+elif fw_brand_num == 5:
+    fw_brand = 'DP'
 
 fw_ssh_ip = raw_input('Firewall SSH ip? ')
 fw_ssh_port = raw_input('Firewall SSH port? ')

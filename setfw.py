@@ -86,6 +86,28 @@ class SetFirewall:
         _scmds = '\n'.join(_cmds)
         return _scmds
 
+    def _dp_ip_to_config(self, badip, _mode):
+        _ip_cmds = ['classes modify network ', ' 1']
+        _dp_table = ['dp black-list table ']
+        _ip = badip
+        _llip = 'll_' + _ip
+        _update = 'classes update-policies set 1\n'
+        if _mode == 'edit':
+            _ip_cmds.append(' -a ' + _ip + ' -s 255.255.255.255 -m "IP Mask"')
+            _ip_cmds.insert(1, 'create ' + _llip)
+            _dp_table.append('create ' + _llip + ' -dn ' + _llip)
+            _ip_cmds = ''.join(_ip_cmds)
+            _dp_table = ''.join(_dp_table)
+            _scmds = _ip_cmds + '\n' + _dp_table + '\n' + ' '
+            #print _scmds
+        elif _mode == 'delete':
+            _dp_table.append('del ' + _llip)
+            _ip_cmds.insert(-1, 'del ' + _llip)
+            _dp_table = ''.join(_dp_table)
+            _ip_cmds = ''.join(_ip_cmds)
+            _scmds = _dp_table + '\n' + _ip_cmds + '\n'
+        return _scmds + _update
+    
     def do_config(self, badip):
         _mode = 'edit'
         _ssh = paramiko.SSHClient()
@@ -96,6 +118,8 @@ class SetFirewall:
             _scmds = self._wg_ip_to_config(badip, _mode)
         elif self.brand == 'PA':
             _scmds = self._pa_ip_to_config(badip, _mode)
+        elif self.brand == 'DP':
+            _scmds = self._dp_ip_to_config(badip, _mode)
         elif self.brand == 'SW':
             _scmds = self._sw_ip_to_config(badip, _mode)
             self.ssh_username = ''
@@ -123,6 +147,8 @@ class SetFirewall:
             _scmds = self._wg_ip_to_config(badip, _mode)
         elif self.brand == 'PA':
             _scmds = self._pa_ip_to_config(badip, _mode)
+        elif self.brand == 'DP':
+            _scmds = self._dp_ip_to_config(badip, _mode)
         elif self.brand == 'SW':
             _scmds = self._sw_ip_to_config(badip, _mode)
             self.ssh_username = ''
@@ -142,8 +168,8 @@ class SetFirewall:
 
         
 def main():
-    setupfw = SetFirewall('PA', '1.1.1.1', '2222', 'sshusername', 'sshpassword')
-    scmds = setupfw._pa_ip_to_config('5.5.5.5', 'delete')
+    setupfw = SetFirewall('DP', '1.1.1.1', '2222', 'sshusername', 'sshpassword')
+    scmds = setupfw._dp_ip_to_config('5.5.5.5', 'edit')
     print scmds
     
 if __name__ == '__main__':
